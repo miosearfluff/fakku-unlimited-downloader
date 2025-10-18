@@ -12,9 +12,7 @@ puppeteer.use(UserAgentPlugin({ makeWindows: true }));
 
 const TIMEOUT = 30000;
 
-async function getWork(options) {
-  const { browser, cookies, url, callback } = options;
-
+async function getWork(browser, cookies, url, callback) {
   const context = await browser.createBrowserContext();
 
   for(let cookie of cookies) {
@@ -73,14 +71,12 @@ async function getPages(page, unboundName, callback) {
   }
 }
 
-async function getWorks(options) {
+async function getWorks(cookies, urls, callback) {
   const browser = await puppeteer.launch({ args: ["--disable-web-security"] });
 
   try {
-    const { urls, ...gwOptions } = options;
-
     for(let url of urls) {
-      await getWork({ ...gwOptions, browser: browser, url: url });
+      await getWork(browser, cookies, url, callback);
       await sleep(1500);
     }
 

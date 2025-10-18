@@ -2,10 +2,25 @@
 "use strict";
 
 const fs = require("fs-extra");
+const path = require("path");
 const process = require("process");
 const { program } = require("commander");
 const { CookieJar } = require("netscape-cookies-parser");
-const downloadWorks = require("./download-works");
+const sanitize = require("sanitize-filename");
+const getWorks = require("./get-works");
+
+async function downloadWorks(cookies, urls, baseOutputDir) {
+  await getWorks(cookies, urls, async (title, artist, count, page, prefixedPage, data) => {
+    console.log(`Saving [${artist}] ${title} page ${page} / ${count}`);
+    const outputDir = path.join(baseOutputDir, sanitize(`[${artist}] ${title} [FAKKU]`));
+    await fs.mkdirp(outputDir, 0o755);
+
+    const imageFilename = sanitize(`${prefixedPage}.png`);
+    const imagePath = path.join(outputDir, imageFilename);
+
+    await fs.writeFile(imagePath, data, { mode: 0o644 });
+  });
+}
 
 function parseCookies(options) {
   const cookieJar = new CookieJar();
@@ -48,7 +63,7 @@ function parseUrls(options) {
     const urls = parseUrls(options);
     const outputDir = await fs.realpath(options.output ?? process.cwd());
 
-    await downloadWorks({ cookies, urls, outputDir });
+    await downloadWorks(cookies, urls, outputDir);
     console.log("Done.");
   }
   catch(e) {
@@ -56,4 +71,3 @@ function parseUrls(options) {
     console.error(e);
   }
 })();
-
