@@ -1,7 +1,7 @@
 "use strict";
 
 const crypto = require("crypto");
-const { dataUriToBuffer } = require('data-uri-to-buffer');
+const { dataUriToBuffer } = require("data-uri-to-buffer");
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const UserAgentPlugin = require("puppeteer-extra-plugin-anonymize-ua");
