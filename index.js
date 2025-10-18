@@ -7,10 +7,10 @@ const process = require("process");
 const { program } = require("commander");
 const { CookieJar } = require("netscape-cookies-parser");
 const sanitize = require("sanitize-filename");
-const getWorks = require("./get-works");
+const downloadWorks = require("./download-works");
 
-async function downloadWorks(cookies, urls, baseOutputDir) {
-  await getWorks(cookies, urls, async (title, artist, count, page, prefixedPage, data) => {
+async function saveWorks(cookies, urls, baseOutputDir) {
+  await downloadWorks(cookies, urls, async (title, artist, count, page, prefixedPage, data) => {
     console.log(`Saving [${artist}] ${title} page ${page} / ${count}`);
     const outputDir = path.join(baseOutputDir, sanitize(`[${artist}] ${title} [FAKKU]`));
     await fs.mkdirp(outputDir, 0o755);
@@ -63,7 +63,7 @@ function parseUrls(options) {
     const urls = parseUrls(options);
     const outputDir = await fs.realpath(options.output ?? process.cwd());
 
-    await downloadWorks(cookies, urls, outputDir);
+    await saveWorks(cookies, urls, outputDir);
     console.log("Done.");
   }
   catch(e) {

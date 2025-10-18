@@ -12,7 +12,7 @@ puppeteer.use(UserAgentPlugin({ makeWindows: true }));
 
 const TIMEOUT = 30000;
 
-async function getWork(browser, cookies, url, callback) {
+async function downloadWork(browser, cookies, url, callback) {
   const context = await browser.createBrowserContext();
 
   for(let cookie of cookies) {
@@ -71,12 +71,12 @@ async function getPages(page, unboundName, callback) {
   }
 }
 
-async function getWorks(cookies, urls, callback) {
+async function downloadWorks(cookies, urls, callback) {
   const browser = await puppeteer.launch({ args: ["--disable-web-security"] });
 
   try {
     for(let url of urls) {
-      await getWork(browser, cookies, url, callback);
+      await downloadWork(browser, cookies, url, callback);
       await sleep(1500);
     }
 
@@ -96,4 +96,4 @@ async function getWorks(cookies, urls, callback) {
   }
 }
 
-module.exports = getWorks;
+module.exports = downloadWorks;
