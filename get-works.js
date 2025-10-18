@@ -1,6 +1,7 @@
 "use strict";
 
 const crypto = require("crypto");
+const { dataUriToBuffer } = require('data-uri-to-buffer');
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const UserAgentPlugin = require("puppeteer-extra-plugin-anonymize-ua");
@@ -32,7 +33,7 @@ async function getWork(options) {
   });
 
   const unboundName = `_${crypto.randomBytes(20).toString("hex")}`;
-  await page.evaluateOnNewDocument(`window.${unboundName} = HTMLCanvasElement.prototype.toBlob;`);
+  await page.evaluateOnNewDocument(`window.${unboundName} = HTMLCanvasElement.prototype.toDataURL;`);
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
 
@@ -56,21 +57,8 @@ async function getPages(page, unboundName, callback) {
 
     const canvas = await frame.$("canvas.page");
 
-    const imageBlob = await frame.evaluate(
-      (e, unboundName) => {
-        return new Promise((resolve, reject) => {
-          window[unboundName].call(e, (blob) => {
-            var reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsBinaryString(blob);
-          });
-        });
-      },
-      canvas,
-      unboundName);
-
-    const imageData = Buffer.from(imageBlob, "binary");
+    const imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].call(e), canvas, unboundName);
+    const imageData = dataUriToBuffer(imageDataURL);
 
     await callback(title, artist, pageCount, pageNumber, pageNumberFull, imageData);
 
