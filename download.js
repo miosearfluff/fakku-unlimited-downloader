@@ -12,7 +12,7 @@ puppeteer.use(UserAgentPlugin({ makeWindows: true }));
 
 const TIMEOUT = 30000;
 
-async function downloadWork(browser, cookies, url, callback) {
+async function downloadBook(browser, cookies, url, callback) {
   const context = await browser.createBrowserContext();
 
   for(let cookie of cookies) {
@@ -35,10 +35,12 @@ async function downloadWork(browser, cookies, url, callback) {
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
 
-  await getPages(page, unboundName, callback);
+  await downloadPages(page, unboundName, callback);
+  
+  await page.close();
 }
 
-async function getPages(page, unboundName, callback) {
+async function downloadPages(page, unboundName, callback) {
   const frameHandle = await page.$("iframe");
   const frame = await frameHandle.contentFrame();
 
@@ -71,12 +73,12 @@ async function getPages(page, unboundName, callback) {
   }
 }
 
-async function downloadWorks(cookies, urls, callback) {
+async function download(cookies, urls, callback) {
   const browser = await puppeteer.launch({ args: ["--disable-web-security"] });
 
   try {
     for(let url of urls) {
-      await downloadWork(browser, cookies, url, callback);
+      await downloadBook(browser, cookies, url, callback);
       await sleep(1500);
     }
 
@@ -96,4 +98,4 @@ async function downloadWorks(cookies, urls, callback) {
   }
 }
 
-module.exports = downloadWorks;
+module.exports = download;

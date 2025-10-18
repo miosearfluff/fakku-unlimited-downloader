@@ -2,7 +2,7 @@
   "name": "fakku-unlimited-downloader",
   "version": "1.0.0",
   "description": "Download manga off of FAKKU",
-  "main": "index.js",
+  "main": "main.js",
   "dependencies": {
     "commander": "^14.0.1",
     "data-uri-to-buffer": "4.0.1",
