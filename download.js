@@ -11,6 +11,7 @@ puppeteer.use(StealthPlugin());
 puppeteer.use(UserAgentPlugin({ makeWindows: true }));
 
 const TIMEOUT = 30000;
+const FLIP_PAGE_TIMEOUT = 1500;
 
 async function downloadBook(browser, cookies, url, callback) {
   const context = await browser.createBrowserContext();
@@ -68,7 +69,7 @@ async function downloadPages(url, page, unboundName, callback) {
       page.waitForNetworkIdle(),
       page.waitForNavigation(),
       page.keyboard.press("Space", { delay: 50 }),
-      sleep(1500)
+      sleep(FLIP_PAGE_TIMEOUT)
     ]);
   }
 }
@@ -79,7 +80,7 @@ async function download(cookies, urls, callback) {
   try {
     for(let url of urls) {
       await downloadBook(browser, cookies, url, callback);
-      await sleep(1500);
+      await sleep(FLIP_PAGE_TIMEOUT);
     }
 
     /*
