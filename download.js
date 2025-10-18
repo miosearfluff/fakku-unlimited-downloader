@@ -35,12 +35,12 @@ async function downloadBook(browser, cookies, url, callback) {
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
 
-  await downloadPages(page, unboundName, callback);
-  
+  await downloadPages(url, page, unboundName, callback);
+
   await page.close();
 }
 
-async function downloadPages(page, unboundName, callback) {
+async function downloadPages(url, page, unboundName, callback) {
   const frameHandle = await page.$("iframe");
   const frame = await frameHandle.contentFrame();
 
@@ -52,15 +52,15 @@ async function downloadPages(page, unboundName, callback) {
   const pageCount = parseInt(await getString(".js-count"), 10);
 
   for(let i = 1; i <= pageCount; i++) {
-    const pageNumberFull = await getString(".js-page");
-    const pageNumber = parseInt(pageNumberFull, 10);
+    const prefixedPageNumber = await getString(".js-page");
+    const pageNumber = parseInt(prefixedPageNumber, 10);
 
     const canvas = await frame.$("canvas.page");
 
     const imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].call(e), canvas, unboundName);
     const imageData = dataUriToBuffer(imageDataURL);
 
-    await callback(title, artist, pageCount, pageNumber, pageNumberFull, imageData);
+    await callback(url, title, artist, pageCount, pageNumber, prefixedPageNumber, imageData);
 
     if(i == pageCount) break;
 
