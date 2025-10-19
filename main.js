@@ -4,7 +4,7 @@
 const fs = require("fs-extra");
 const path = require("path");
 const sanitize = require("sanitize-filename");
-const { cookies, urls, outputDir, progressPath } = require("./options");
+const { cookies, urls, outputDir, progressPath, headless } = require("./options");
 const download = require("./download");
 
 async function savePage(url, title, artist, count, page, prefixedPage, data) {
@@ -24,7 +24,7 @@ async function savePage(url, title, artist, count, page, prefixedPage, data) {
 
 (async () => {
   try {
-    await download(cookies, urls, savePage);
+    await download(cookies, urls, headless, savePage);
     console.log("Done.");
   }
   catch(e) {

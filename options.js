@@ -56,7 +56,8 @@ program
   .requiredOption("-c, --cookies <file>", "path to file containing logged-in fakku cookies in Netscape format")
   .option("-u, --url <urls...>", "one or more urls of FAKKU manga to download")
   .option("-U, --urls <file>", "path to file containing list of FAKKU manga urls to download")
-  .option("-o, --output <dir>", "path to directory where manga should be downloaded to");
+  .option("-o, --output <dir>", "path to directory where manga should be downloaded to")
+  .option("--no-headless", "run in headful mode to assist with debugging; also keeps browser open on error");
 
 program.parse();
 
@@ -65,5 +66,6 @@ const outputDir = fs.realpathSync(options.output ?? ".");
 const progressPath = path.join(outputDir, "downloads.log");
 const cookies = parseCookies(options);
 const urls = skipSavedUrls(normaliseUrls(parseUrls(options)), progressPath);
+const headless = options.headless;
 
-module.exports = { cookies, urls, outputDir, progressPath };
+module.exports = { cookies, urls, outputDir, progressPath, headless };

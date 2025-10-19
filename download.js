@@ -80,8 +80,8 @@ async function downloadPages(url, page, unboundName, callback) {
   await frameHandle.dispose();
 }
 
-async function download(cookies, urls, callback) {
-  const browser = await puppeteer.launch({ args: ["--disable-web-security"] });
+async function download(cookies, urls, headless, callback) {
+  const browser = await puppeteer.launch({ headless: headless, args: ["--disable-web-security"] });
 
   try {
     for(let url of urls) {
@@ -89,18 +89,20 @@ async function download(cookies, urls, callback) {
       await sleep(FLIP_PAGE_TIMEOUT);
     }
 
-    /*
-    If this sleep isn't here, then the following error gets printed to the console, triggered by the
-    await browser.close()
-    line:
-    ERROR: The process with PID <id> (child process of PID <other id>) could not be terminated.
-    Reason: The operation attempted is not supported.
-    */
-    await sleep(100);
-    await browser.close();
+    if(headless) {
+      /*
+      If this sleep isn't here, then the following error gets printed to the console, triggered by the
+      await browser.close()
+      line:
+      ERROR: The process with PID <id> (child process of PID <other id>) could not be terminated.
+      Reason: The operation attempted is not supported.
+      */
+      await sleep(100);
+      await browser.close();
+    }
   }
   catch(e) {
-    if(browser) await browser.close();
+    if(browser && headless) await browser.close();
     throw e;
   }
 }
