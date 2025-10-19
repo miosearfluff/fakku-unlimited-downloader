@@ -33,6 +33,7 @@ async function downloadBook(browser, cookies, url, callback) {
 
   const unboundName = `_${crypto.randomBytes(20).toString("hex")}`;
   await page.evaluateOnNewDocument(`window.${unboundName} = HTMLCanvasElement.prototype.toDataURL;`);
+  await page.evaluateOnNewDocument(`window.localStorage.setItem("fakku-twoPageMode", "0");`);
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
 
