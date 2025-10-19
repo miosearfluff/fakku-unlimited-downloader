@@ -25,7 +25,7 @@ async function savePage(url, title, artist, count, page, prefixedPage, data) {
 (async () => {
   try {
     await download(cookies, urls, headless, savePage);
-    console.log("Done.");
+    console.log("Done downloading all URLs");
   }
   catch(e) {
     console.log("An error occurred. Sorry!");

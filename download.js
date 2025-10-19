@@ -14,6 +14,8 @@ const TIMEOUT = 30000;
 const FLIP_PAGE_TIMEOUT = 1500;
 
 async function downloadBook(browser, cookies, url, callback) {
+  console.log(`Downloading URL ${url}`);
+
   const context = await browser.createBrowserContext();
 
   for(let cookie of cookies) {
@@ -40,6 +42,8 @@ async function downloadBook(browser, cookies, url, callback) {
   await downloadPages(url, page, unboundName, callback);
 
   await page.close();
+
+  console.log(`Done downloading URL ${url}`);
 }
 
 async function downloadPages(url, page, unboundName, callback) {
