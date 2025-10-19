@@ -43,7 +43,7 @@ async function downloadBook(browser, cookies, url, callback) {
 }
 
 async function downloadPages(url, page, unboundName, callback) {
-  const frameHandle = await page.$("iframe");
+  const frameHandle = await page.waitForSelector("iframe");
   const frame = await frameHandle.contentFrame();
 
   const getString = async (selector) => (await frame.$eval(selector, e => e.textContent)).trim();
@@ -54,25 +54,30 @@ async function downloadPages(url, page, unboundName, callback) {
   const pageCount = parseInt(await getString(".js-count"), 10);
 
   for(let i = 1; i <= pageCount; i++) {
-    const prefixedPageNumber = await getString(".js-page");
-    const pageNumber = parseInt(prefixedPageNumber, 10);
+    const canvas = await frame.waitForSelector("canvas.page");
 
-    const canvas = await frame.$("canvas.page");
+    await frame.locator(".loader").setVisibility("hidden").wait();
 
     const imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].call(e), canvas, unboundName);
     const imageData = dataUriToBuffer(imageDataURL);
+
+    await canvas.dispose();
+
+    const prefixedPageNumber = await getString(".js-page");
+    const pageNumber = parseInt(prefixedPageNumber, 10);
 
     await callback(url, title, artist, pageCount, pageNumber, prefixedPageNumber, imageData);
 
     if(i == pageCount) break;
 
     await Promise.all([
-      page.waitForNetworkIdle(),
-      page.waitForNavigation(),
+      page.waitForNavigation({ waitUntil: "networkidle0" }),
       page.keyboard.press("Space", { delay: 50 }),
       sleep(FLIP_PAGE_TIMEOUT)
     ]);
   }
+
+  await frameHandle.dispose();
 }
 
 async function download(cookies, urls, callback) {
