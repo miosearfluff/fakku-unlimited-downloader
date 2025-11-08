@@ -34,10 +34,11 @@ async function downloadBook(browser, cookies, url, callback) {
   });
 
   const unboundName = `_${crypto.randomBytes(20).toString("hex")}`;
-  await page.evaluateOnNewDocument(`window.${unboundName} = {
-    toDataURL: HTMLCanvasElement.prototype.toDataURL,
-    createElement: HTMLDocument.prototype.createElement
-  };`);
+  await page.evaluateOnNewDocument((unboundName) => {
+    let toDataURL = HTMLCanvasElement.prototype.toDataURL;
+    let createElement = HTMLDocument.prototype.createElement;
+    window[unboundName] = { toDataURL, createElement };
+  }, unboundName);
   await page.evaluateOnNewDocument(`window.localStorage.setItem("fakku-twoPageMode", "0");`);
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
@@ -48,6 +49,17 @@ async function downloadBook(browser, cookies, url, callback) {
 
   console.log(`Done downloading URL ${url}`);
 }
+
+const captureCanvas = (canvas, unboundName) => window[unboundName].toDataURL.call(canvas);
+const captureImage = (image, unboundName) => {
+  const { createElement, toDataURL } = window[unboundName];
+  const canvas = createElement.call(document, "canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0);
+  return toDataURL.call(canvas);
+};
 
 async function downloadPages(url, page, unboundName, callback) {
   const frameHandle = await page.waitForSelector("iframe");
@@ -67,21 +79,7 @@ async function downloadPages(url, page, unboundName, callback) {
 
     const imageName = await image.evaluate(e => e.nodeName);
 
-    let imageDataURL;
-    if(imageName == "CANVAS") {
-      imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].toDataURL.call(e), image, unboundName);
-    }
-    else {
-      imageDataURL = await frame.evaluate((e, unboundName) => {
-        const canvas = window[unboundName].createElement.call(document, "canvas");
-        canvas.width = e.naturalWidth;
-        canvas.height = e.naturalHeight;
-        const context = canvas.getContext("2d");
-        context.drawImage(e, 0, 0);
-        return window[unboundName].toDataURL.call(canvas);
-      }, image, unboundName);
-    }
-
+    const imageDataURL = await image.evaluate(imageName == "CANVAS" ? captureCanvas : captureImage, unboundName);
     const imageData = dataUriToBuffer(imageDataURL);
 
     await image.dispose();
