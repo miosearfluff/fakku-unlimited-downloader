@@ -34,7 +34,10 @@ async function downloadBook(browser, cookies, url, callback) {
   });
 
   const unboundName = `_${crypto.randomBytes(20).toString("hex")}`;
-  await page.evaluateOnNewDocument(`window.${unboundName} = HTMLCanvasElement.prototype.toDataURL;`);
+  await page.evaluateOnNewDocument(`window.${unboundName} = {
+    toDataURL: HTMLCanvasElement.prototype.toDataURL,
+    createElement: HTMLDocument.prototype.createElement
+  };`);
   await page.evaluateOnNewDocument(`window.localStorage.setItem("fakku-twoPageMode", "0");`);
 
   await page.goto(url, { waitUntil: ["load", "networkidle0"] });
@@ -58,14 +61,30 @@ async function downloadPages(url, page, unboundName, callback) {
   const pageCount = parseInt(await getString(".js-count"), 10);
 
   for(let i = 1; i <= pageCount; i++) {
-    const canvas = await frame.waitForSelector("canvas.page");
+    const image = await frame.waitForSelector("canvas.page, img.page");
 
     await frame.locator(".loader").setVisibility("hidden").wait();
 
-    const imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].call(e), canvas, unboundName);
+    const imageName = await image.evaluate(e => e.nodeName);
+
+    let imageDataURL;
+    if(imageName == "CANVAS") {
+      imageDataURL = await frame.evaluate((e, unboundName) => window[unboundName].toDataURL.call(e), image, unboundName);
+    }
+    else {
+      imageDataURL = await frame.evaluate((e, unboundName) => {
+        const canvas = window[unboundName].createElement.call(document, "canvas");
+        canvas.width = e.naturalWidth;
+        canvas.height = e.naturalHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(e, 0, 0);
+        return window[unboundName].toDataURL.call(canvas);
+      }, image, unboundName);
+    }
+
     const imageData = dataUriToBuffer(imageDataURL);
 
-    await canvas.dispose();
+    await image.dispose();
 
     const prefixedPageNumber = await getString(".js-page");
     const pageNumber = parseInt(prefixedPageNumber, 10);
